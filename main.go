@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"net"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -67,9 +70,13 @@ func threadedClientConnectionHandler(connection net.Conn) {
 		} else if strings.Contains(message, "AP01") { // AP01 = Location?
 			fmt.Println("-- AP01")
 
-			// var packetData = getJSONFromAP01(string(buffer[:mLen]))
-			// body := json.Marshal(packetData)
-			// http.Post(locationRoute, "application/json", body)
+			var packetData = getJSONFromAP01(string(buffer[:mLen]))
+			body, err := json.Marshal(packetData)
+			if err != nil {
+				fmt.Println("Error marshaling json:", err.Error())
+				return
+			}
+			http.Post(locationRoute, "application/json", bytes.NewBuffer(body))
 
 		} else if strings.Contains(message, "AP03") { // AP03 = Heartbeat
 			fmt.Println("-- AP03")
