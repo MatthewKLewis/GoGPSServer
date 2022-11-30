@@ -44,31 +44,19 @@ func threadedClientConnectionHandler(connection net.Conn) {
 	if err != nil {
 		fmt.Println("Error reading:", err.Error())
 	}
-	fmt.Println("Received: ", string(buffer[:mLen]))
+	fmt.Println("Received: ", string(buffer[:mLen]), " from: ", connection.LocalAddr().String())
 
 	message := string(buffer[:mLen])
 
-	// AP00 = Connection
-	if strings.Contains(message, "AP00") {
-		parseAP00(string(buffer[:mLen]))
-	} else if strings.Contains(message, "AP01") {
-		parseAP01(string(buffer[:mLen]))
-	} else if strings.Contains(message, "AP10") {
-		parseAP10(string(buffer[:mLen]))
+	if strings.Contains(message, "AP00") { // AP00 = Connection
+		fmt.Print(parseAP00(string(buffer[:mLen])))
+
+	} else if strings.Contains(message, "AP01") { // AP01 = Location?
+		fmt.Print(parseAP01(string(buffer[:mLen])))
+
+	} else if strings.Contains(message, "AP10") { // AP10 = Alert?
+		fmt.Print(parseAP10(string(buffer[:mLen])))
+
 	}
-
-	_, err = connection.Write([]byte("Thanks! Got your message:" + string(buffer[:mLen])))
 	//connection.Close()
-}
-
-func parseAP00(msg string) string {
-	return msg
-}
-
-func parseAP01(msg string) string {
-	return msg
-}
-
-func parseAP10(msg string) string {
-	return msg
 }
