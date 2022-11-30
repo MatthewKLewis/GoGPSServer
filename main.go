@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -55,31 +58,39 @@ func threadedClientConnectionHandler(connection net.Conn) {
 		// Handles Message
 		message := string(buffer[:mLen])
 		//fmt.Println(message)
+
+		// Sorting
 		if strings.Contains(message, "AP00") { // AP00 = Connection
 			deviceIMEI = getIMEIFromAP00(message)
 			connection.Write([]byte("IWBP00," + dtg + ",4#"))
 
-		} else if strings.Contains(message, "AP01") { // AP01 = Location?
-			// var packetData, err = getJSONFromAP01(string(buffer[:mLen]), deviceIMEI)
-			// if err != nil {
-			// 	fmt.Println(err.Error())
-			// 	return
-			// }
+		} else if strings.Contains(message, "AP01") { // AP01 = Location
+			var packetData, err = getJSONFromAP01(message, deviceIMEI)
+			if err != nil {
+				fmt.Println(err.Error())
+				return
+			}
 
-			// _, err = json.Marshal(packetData)
-			// if err != nil {
-			// 	fmt.Println("Error marshaling json:", err.Error())
-			// 	return
-			// }
+			body, err := json.Marshal(packetData)
+			if err != nil {
+				fmt.Println("Error marshaling json:", err.Error())
+				return
+			}
 
-			// fmt.Println(packetData)
-			// http.Post(alertRoute, "application/json", bytes.NewBuffer(body))
+			res, err := http.Post(alertRoute, "application/json", bytes.NewBuffer(body))
+			if err != nil {
+				fmt.Println(err.Error())
+				return
+			}
+
+			resBody, _ := ioutil.ReadAll(res.Body)
+			fmt.Printf("client: response body: %s\n", resBody)
 
 		} else if strings.Contains(message, "AP03") { // AP03 = Heartbeat
 			connection.Write([]byte("IWBP03#"))
 
-		} else if strings.Contains(message, "AP10") { // AP10 = Alert?
-			var packetData, err = getJSONFromAP10(string(buffer[:mLen]), deviceIMEI)
+		} else if strings.Contains(message, "AP10") { // AP10 = Alert
+			var packetData, err = getJSONFromAP10(message, deviceIMEI)
 			if err != nil {
 				fmt.Println(err.Error())
 				return
@@ -94,14 +105,14 @@ func threadedClientConnectionHandler(connection net.Conn) {
 			fmt.Println(packetData)
 			// http.Post(alertRoute, "application/json", bytes.NewBuffer(body))
 
-		} else if strings.Contains(message, "LK") { // LK = Link?
+		} else if strings.Contains(message, "LK") { // LK = Link
 			fmt.Println("-- LK")
-			deviceIMEI := getIMEIFromLK(string(buffer[:mLen]))
+			deviceIMEI = getIMEIFromLK(message)
 			stringToSend := "[3G*" + deviceIMEI + "*0002*LK]"
 			fmt.Println(stringToSend)
 			connection.Write([]byte(stringToSend))
 
-		} else if strings.Contains(message, "CUSTOMER") { // LK = Link?
+		} else if strings.Contains(message, "CUSTOMER") { // CUSTOMER = Location for LK-type messages
 			fmt.Println("-- CUSTOMER...")
 
 		} else {

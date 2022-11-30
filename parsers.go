@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"strings"
 )
 
 type PreciseGPSData struct {
@@ -24,9 +23,9 @@ type PreciseGPSData struct {
 }
 
 func getIMEIFromAP00(msg string) string {
-	fmt.Println(msg)
-	var data = strings.Split(msg, "'")[0]
-	return data[6:21]
+	//fmt.Println(msg)
+	//fmt.Println(msg[6:21])
+	return msg[6:21]
 }
 
 func getIMEIFromLK(msg string) string {
@@ -58,18 +57,18 @@ func getJSONFromAP01(msg string, deviceIMEI string) (PreciseGPSData, error) {
 	// 	return retObj, errors.New("No LAT LON")
 	// }
 
-	lat, _ := strconv.ParseFloat(msg[13:22], 64) //Range is smaller for latitudes
-	lon, _ := strconv.ParseFloat(msg[23:33], 64) //Range is 1 digit larger for longitudes
+	latDeg, err := strconv.ParseFloat(msg[13:15], 64) //Range is smaller for latitudes
+	latPoints, err := strconv.ParseFloat(msg[16:23], 64)
 
-	if msg[23] == 'S' {
-		lat *= -1
-	}
-	if msg[23] == 'E' {
-		lon *= -1
+	lonDeg, err := strconv.ParseFloat(msg[23:26], 64) //Range is 1 digit larger for longitudes
+	lonPoints, err := strconv.ParseFloat(msg[27:33], 64)
+
+	if err != nil {
+		fmt.Println(err.Error())
+		return retObj, err
 	}
 
-	fmt.Println(lat)
-	fmt.Println(lon)
+	fmt.Println(latDeg, latPoints, lonDeg, lonPoints)
 
 	return retObj, nil
 }
