@@ -1,30 +1,23 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"net"
-	"net/http"
 	"os"
 	"strings"
 	"time"
 )
 
 const (
-	host           = "172.31.51.82" // 127.0.0.1 // 172.31.51.82
+	host           = "172.31.51.82"
 	port           = "8000"
 	connectionType = "tcp"
 	locationRoute  = "http://3.212.201.170:802/XpertRestApi/api/location_data"
 	alertRoute     = "http://3.212.201.170:802/XpertRestApi/api/alert_data"
 )
 
-var numberOfConnections = 0
-
 func main() {
-	connectionMap := make(map[string]int)
-
-	fmt.Println("Server Running...")
 	socketServer, err := net.Listen(connectionType, host+":"+port)
 	if err != nil {
 		fmt.Println("Error listening:", err.Error())
@@ -39,16 +32,17 @@ func main() {
 			fmt.Println("Error accepting: ", err.Error())
 			os.Exit(1)
 		}
-		numberOfConnections++
-		connectionMap[connection.RemoteAddr().String()] = numberOfConnections
 		go threadedClientConnectionHandler(connection)
 	}
 }
 
 func threadedClientConnectionHandler(connection net.Conn) {
+
+	deviceIMEI := ""
+
 	for {
 		buffer := make([]byte, 1024)
-		dtg := time.Now().Format("01/02/2006 15:04:05")
+		dtg := time.Now().Format("01/30/2006 15:04:05")
 
 		// Waits here for next message...
 		mLen, err := connection.Read(buffer)
@@ -59,53 +53,59 @@ func threadedClientConnectionHandler(connection net.Conn) {
 		}
 
 		// Handles Message
-		fmt.Println(dtg, "Received from:", connection.RemoteAddr().String())
 		message := string(buffer[:mLen])
+		//fmt.Println(message)
 		if strings.Contains(message, "AP00") { // AP00 = Connection
-			fmt.Println("-- AP00")
-			fmt.Println("-- IMEI:", getIMEIFromAP00(string(buffer[:mLen])))
-
+			deviceIMEI = getIMEIFromAP00(message)
 			connection.Write([]byte("IWBP00," + dtg + ",4#"))
 
 		} else if strings.Contains(message, "AP01") { // AP01 = Location?
-			fmt.Println("-- AP01")
+			// var packetData, err = getJSONFromAP01(string(buffer[:mLen]), deviceIMEI)
+			// if err != nil {
+			// 	fmt.Println(err.Error())
+			// 	return
+			// }
 
-			var packetData = getJSONFromAP01(string(buffer[:mLen]))
-			body, err := json.Marshal(packetData)
+			// _, err = json.Marshal(packetData)
+			// if err != nil {
+			// 	fmt.Println("Error marshaling json:", err.Error())
+			// 	return
+			// }
+
+			// fmt.Println(packetData)
+			// http.Post(alertRoute, "application/json", bytes.NewBuffer(body))
+
+		} else if strings.Contains(message, "AP03") { // AP03 = Heartbeat
+			connection.Write([]byte("IWBP03#"))
+
+		} else if strings.Contains(message, "AP10") { // AP10 = Alert?
+			var packetData, err = getJSONFromAP10(string(buffer[:mLen]), deviceIMEI)
+			if err != nil {
+				fmt.Println(err.Error())
+				return
+			}
+
+			_, err = json.Marshal(packetData)
 			if err != nil {
 				fmt.Println("Error marshaling json:", err.Error())
 				return
 			}
-			http.Post(locationRoute, "application/json", bytes.NewBuffer(body))
 
-		} else if strings.Contains(message, "AP03") { // AP03 = Heartbeat
-			fmt.Println("-- AP03")
-			fmt.Println("-- Heartbeat")
-
-			connection.Write([]byte("IWBP03#"))
-
-		} else if strings.Contains(message, "AP10") { // AP10 = Alert?
-			fmt.Println("-- AP10")
-			fmt.Println("--", getJSONFromAP10(string(buffer[:mLen])))
-
-			//stringToSend := "Hello"
-			//connection.Write([]byte(stringToSend))
+			fmt.Println(packetData)
+			// http.Post(alertRoute, "application/json", bytes.NewBuffer(body))
 
 		} else if strings.Contains(message, "LK") { // LK = Link?
 			fmt.Println("-- LK")
-			fmt.Println("-- IMEI:", getIMEIFromLK(string(buffer[:mLen])))
-
-			//stringToSend := "Hello"
-			//connection.Write([]byte(stringToSend))
+			deviceIMEI := getIMEIFromLK(string(buffer[:mLen]))
+			stringToSend := "[3G*" + deviceIMEI + "*0002*LK]"
+			fmt.Println(stringToSend)
+			connection.Write([]byte(stringToSend))
 
 		} else if strings.Contains(message, "CUSTOMER") { // LK = Link?
 			fmt.Println("-- CUSTOMER...")
 
-			//stringToSend := "Hello"
-			//connection.Write([]byte(stringToSend))
-
 		} else {
-			fmt.Println("-- Other message...")
+			//fmt.Println("-- Other message...")
 		}
 	}
 }
