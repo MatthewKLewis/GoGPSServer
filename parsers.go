@@ -68,7 +68,10 @@ func getJSONFromAP01(msg string, deviceIMEI string) (PreciseGPSData, error) {
 		return retObj, err
 	}
 
-	fmt.Println(latDeg, latPoints, lonDeg, lonPoints)
+	retObj.latitude = latDeg + latPoints/300
+	retObj.longitude = lonDeg + lonPoints/300
+
+	//fmt.Println(latDeg, latPoints, lonDeg, lonPoints)
 
 	return retObj, nil
 }
@@ -95,8 +98,4 @@ func getJSONFromAP10(msg string, deviceIMEI string) (PreciseGPSData, error) {
 		return retObj, errors.New("No LAT LON")
 	}
 	return retObj, nil
-}
-
-func convertLatLon(latOrLon float64) {
-	fmt.Println("Convert: ", latOrLon)
 }
