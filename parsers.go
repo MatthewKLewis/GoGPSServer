@@ -28,7 +28,7 @@ func getIMEIFromAP00(msg string) string {
 
 func getIMEIFromLK(msg string) string {
 	var data = strings.Split(msg, "'")[0]
-	return data[1:15]
+	return data[4:19]
 }
 
 func getJSONFromAP01(msg string) PreciseGPSData {

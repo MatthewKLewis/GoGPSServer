@@ -5,6 +5,7 @@ import (
 	"net"
 	"os"
 	"strings"
+	"time"
 )
 
 const (
@@ -21,23 +22,22 @@ func main() {
 	connectionMap := make(map[string]int)
 
 	fmt.Println("Server Running...")
-	server, err := net.Listen(connectionType, host+":"+port)
+	socketServer, err := net.Listen(connectionType, host+":"+port)
 	if err != nil {
 		fmt.Println("Error listening:", err.Error())
 		os.Exit(1)
 	}
-	defer server.Close()
+	defer socketServer.Close()
 
 	fmt.Println("Listening on", host, ":", port)
 	for {
-		connection, err := server.Accept()
+		connection, err := socketServer.Accept()
 		if err != nil {
 			fmt.Println("Error accepting: ", err.Error())
 			os.Exit(1)
 		}
 		numberOfConnections++
 		connectionMap[connection.RemoteAddr().String()] = numberOfConnections
-		//fmt.Println(connectionMap)
 		go threadedClientConnectionHandler(connection)
 	}
 }
@@ -45,6 +45,7 @@ func main() {
 func threadedClientConnectionHandler(connection net.Conn) {
 	for {
 		buffer := make([]byte, 1024)
+		dtg := time.Now().Format("01/02/2006 15:04:05")
 
 		// Waits here for next message...
 		mLen, err := connection.Read(buffer)
@@ -55,31 +56,49 @@ func threadedClientConnectionHandler(connection net.Conn) {
 		}
 
 		// Handles Message
-		fmt.Println("Received from:", connection.RemoteAddr().String())
+		fmt.Println(dtg, "Received from:", connection.RemoteAddr().String())
 		message := string(buffer[:mLen])
 		if strings.Contains(message, "AP00") { // AP00 = Connection
 			fmt.Println("-- AP00")
 			fmt.Println("-- IMEI:", getIMEIFromAP00(string(buffer[:mLen])))
 
+			connection.Write([]byte("IWBP00," + dtg + ",4#"))
+
 		} else if strings.Contains(message, "AP01") { // AP01 = Location?
 			fmt.Println("-- AP01")
-			fmt.Println("--", getJSONFromAP01(string(buffer[:mLen])))
+
+			// var packetData = getJSONFromAP01(string(buffer[:mLen]))
+			// body := json.Marshal(packetData)
+			// http.Post(locationRoute, "application/json", body)
 
 		} else if strings.Contains(message, "AP03") { // AP03 = Heartbeat
 			fmt.Println("-- AP03")
-			//fmt.Println("--", getJSONFromAP01(string(buffer[:mLen])))
+			fmt.Println("-- Heartbeat")
+
+			connection.Write([]byte("IWBP03#"))
 
 		} else if strings.Contains(message, "AP10") { // AP10 = Alert?
 			fmt.Println("-- AP10")
 			fmt.Println("--", getJSONFromAP10(string(buffer[:mLen])))
 
-		} else if strings.Contains(message, "LK") { // LK = Other Tag?
+			//stringToSend := "Hello"
+			//connection.Write([]byte(stringToSend))
+
+		} else if strings.Contains(message, "LK") { // LK = Link?
 			fmt.Println("-- LK")
 			fmt.Println("-- IMEI:", getIMEIFromLK(string(buffer[:mLen])))
 
-		} else {
-			//fmt.Println("-- MESSAGE OTHER THAN AP 00, 01, 10")
+			//stringToSend := "Hello"
+			//connection.Write([]byte(stringToSend))
 
+		} else if strings.Contains(message, "CUSTOMER") { // LK = Link?
+			fmt.Println("-- CUSTOMER...")
+
+			//stringToSend := "Hello"
+			//connection.Write([]byte(stringToSend))
+
+		} else {
+			fmt.Println("-- Other message...")
 		}
 	}
 }
