@@ -8,20 +8,20 @@ import (
 )
 
 type PreciseGPSData struct {
-	deviceimei          string
-	latitude            float64
-	longitude           float64
-	altitude            int
-	devicetime          string
-	speed               float64
-	Batterylevel        int
-	casefile_id         string
-	address             string
-	positioningmode     string
-	tz                  string
-	offender_name       string
-	offender_id         string
-	loc_message_content string
+	Deviceimei        string  `json:"deviceimei"`
+	Latitude          float64 `json:"latitude"`
+	Longitude         float64 `json:"longitude"`
+	Altitude          int     `json:"altitude"`
+	Devicetime        string  `json:"devicetime"`
+	Speed             float64 `json:"speed"`
+	BatteryLevel      int     `json:"Batterylevel"`
+	CasefileId        string  `json:"casefile_id"`
+	Address           string  `json:"address"`
+	PositioningMode   string  `json:"positioningmode"`
+	Tz                string  `json:"tz"`
+	OffenderName      string  `json:"offender_name"`
+	OffenderId        string  `json:"offender_id"`
+	LocMessageContent string  `json:"loc_message_content"`
 }
 
 func getIMEIFromAP00(msg string) string {
@@ -35,7 +35,7 @@ func getIMEIFromLK(msg string) string {
 // IWAP01301122V0000.0000N00000.0000E000.0201934000.0003900009700003,310,260,46136,11869187,AP1|16:8d:db:65:af:0f|-41&AP2|5c:5b:35:01:cd:d1|-43&AP3|3a:22:e2:a3:e1:07|-45&AP4|70:7d:b9:e1:95:c4|-47&AP5|70:7d:b9:e1:95:ce|-51#
 func getJSONFromAP01(msg string, deviceIMEI string) (PreciseGPSData, error) {
 	retObj := PreciseGPSData{
-		deviceimei:          deviceIMEI,
+		Deviceimei:          deviceIMEI,
 		latitude:            0.0,
 		longitude:           0.0,
 		altitude:            0,
@@ -65,18 +65,18 @@ func getJSONFromAP01(msg string, deviceIMEI string) (PreciseGPSData, error) {
 	}
 	retObj.latitude = latDeg + latPoints/300
 	retObj.longitude = lonDeg + lonPoints/300
-	fmt.Println(latDeg, latPoints, lonDeg, lonPoints)
 
 	rssis := strings.Split(msg, "|")[1:]
 	for i := 0; i < len(rssis); i++ {
 		fmt.Println(rssis[i])
 		if i%2 == 0 {
 			retObj.loc_message_content += rssis[i] + ":"
+		} else if i == len(rssis)-1 {
+			retObj.loc_message_content += strings.Split(rssis[i], "&")[0] + "#"
 		} else {
-			retObj.loc_message_content += rssis[i] + ";"
+			retObj.loc_message_content += strings.Split(rssis[i], "&")[0] + ";"
 		}
 	}
-
 	return retObj, nil
 }
 

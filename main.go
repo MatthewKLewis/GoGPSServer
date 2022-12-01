@@ -16,8 +16,8 @@ const (
 	host           = "172.31.51.82"
 	port           = "8000"
 	connectionType = "tcp"
-	locationRoute  = "http://3.212.201.170:802/XpertRestApi/api/location_data"
-	alertRoute     = "http://3.212.201.170:802/XpertRestApi/api/alert_data"
+	locationRoute  = "http://52.45.17.177:802/XpertRestApi/api/location_data"
+	alertRoute     = "http://52.45.17.177:802/XpertRestApi/api/alert_data"
 )
 
 func main() {
@@ -77,6 +77,7 @@ func threadedClientConnectionHandler(connection net.Conn) {
 				fmt.Println("Error marshaling json:", err.Error())
 				return
 			}
+			fmt.Println(packetData)
 			res, err := http.Post(locationRoute, "application/json", bytes.NewBuffer(body))
 			if err != nil {
 				fmt.Println(err.Error())
@@ -103,7 +104,7 @@ func threadedClientConnectionHandler(connection net.Conn) {
 				fmt.Println("Error marshaling json:", err.Error())
 				return
 			}
-			fmt.Println(packetData)
+			fmt.Println(string(body))
 			res, err := http.Post(alertRoute, "application/json", bytes.NewBuffer(body))
 			if err != nil {
 				fmt.Println(err.Error())
