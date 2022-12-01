@@ -71,7 +71,7 @@ func getJSONFromAP01(msg string, deviceIMEI string) (PreciseGPSData, error) {
 	retObj.latitude = latDeg + latPoints/300
 	retObj.longitude = lonDeg + lonPoints/300
 
-	//fmt.Println(latDeg, latPoints, lonDeg, lonPoints)
+	fmt.Println(latDeg, latPoints, lonDeg, lonPoints)
 
 	return retObj, nil
 }
