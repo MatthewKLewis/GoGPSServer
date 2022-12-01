@@ -4,22 +4,24 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 type PreciseGPSData struct {
-	deviceimei      string
-	latitude        float64
-	longitude       float64
-	altitude        int
-	devicetime      string
-	speed           float64
-	Batterylevel    int
-	casefile_id     string
-	address         string
-	positioningmode string
-	tz              string
-	offender_name   string
-	offender_id     string
+	deviceimei          string
+	latitude            float64
+	longitude           float64
+	altitude            int
+	devicetime          string
+	speed               float64
+	Batterylevel        int
+	casefile_id         string
+	address             string
+	positioningmode     string
+	tz                  string
+	offender_name       string
+	offender_id         string
+	loc_message_content string
 }
 
 func getIMEIFromAP00(msg string) string {
@@ -38,19 +40,20 @@ func getIMEIFromLK(msg string) string {
 func getJSONFromAP01(msg string, deviceIMEI string) (PreciseGPSData, error) {
 	fmt.Println(msg)
 	retObj := PreciseGPSData{
-		deviceimei:      deviceIMEI,
-		latitude:        0.0,
-		longitude:       0.0,
-		altitude:        0,
-		devicetime:      "new go parser",
-		speed:           0.0,
-		Batterylevel:    0,
-		casefile_id:     "new go parser",
-		address:         "new go parser",
-		positioningmode: "new go parser",
-		tz:              "new go parser",
-		offender_name:   "new go parser",
-		offender_id:     "new go parser",
+		deviceimei:          deviceIMEI,
+		latitude:            0.0,
+		longitude:           0.0,
+		altitude:            0,
+		devicetime:          "",
+		speed:               0.0,
+		Batterylevel:        0,
+		casefile_id:         "",
+		address:             "",
+		positioningmode:     "",
+		tz:                  "",
+		offender_name:       "",
+		offender_id:         "",
+		loc_message_content: "",
 	}
 
 	// if msg[12] != 'A' { // Valid packets have an 'A' (65) rather than a 'V' (86) at index 6
@@ -59,19 +62,18 @@ func getJSONFromAP01(msg string, deviceIMEI string) (PreciseGPSData, error) {
 
 	latDeg, err := strconv.ParseFloat(msg[13:15], 64) //Range is smaller for latitudes
 	latPoints, err := strconv.ParseFloat(msg[16:23], 64)
-
 	lonDeg, err := strconv.ParseFloat(msg[23:26], 64) //Range is 1 digit larger for longitudes
 	lonPoints, err := strconv.ParseFloat(msg[27:33], 64)
-
 	if err != nil {
 		fmt.Println(err.Error())
 		return retObj, err
 	}
-
 	retObj.latitude = latDeg + latPoints/300
 	retObj.longitude = lonDeg + lonPoints/300
-
 	fmt.Println(latDeg, latPoints, lonDeg, lonPoints)
+
+	rssis := strings.Split(msg, "|")[1:]
+	fmt.Println(rssis)
 
 	return retObj, nil
 }
