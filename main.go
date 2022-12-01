@@ -48,7 +48,10 @@ func threadedClientConnectionHandler(connection net.Conn) {
 		// Blocks here, waiting for next message, sets time after Reading
 		mLen, err := connection.Read(buffer)
 		dtg := time.Now().Format("01/30/2006 15:04:05")
-		handleError(err)
+		if err != nil {
+			fmt.Println("Breaking from While Loop, Couldn't Read Buffer!")
+			break
+		}
 
 		message := string(buffer[:mLen])
 
@@ -72,10 +75,11 @@ func threadedClientConnectionHandler(connection net.Conn) {
 			handleError(err)
 			sendToAPI(packetData)
 
-		} else if strings.Contains(message, "LK") { // LK = Link // [3G*8800000015*0009*UPLOAD,600]
+		} else if strings.Contains(message, "LK") { // LK = Link // [3G*8800000015*0009*UPLOAD,600] [3G*8800000015*0027*SOS,00000000000,00000000000,00000000000]
 			deviceIMEI = getIMEIFromLK(message)
 			connection.Write([]byte("[3G*" + deviceIMEI + "*0002*LK]"))
-			connection.Write([]byte("[3G*" + deviceIMEI + "*0008*UPLOAD,60]"))
+			//connection.Write([]byte("[3G*" + deviceIMEI + "*0008*UPLOAD,60]"))
+			connection.Write([]byte("[3G*" + deviceIMEI + "*0027*SOS,15712257714,15712257714,15712257714]"))
 
 		} else if strings.Contains(message, "CUSTOMER") { // CUSTOMER = Location
 			packetData, err = getJSONFromCUSTOMER(message, deviceIMEI)

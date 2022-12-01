@@ -134,10 +134,14 @@ func getJSONFromAP10(msg string, deviceIMEI string) (PreciseGPSData, error) {
 }
 
 // [3G*357593065573357*0177*UDCUSTOMER1,011222,185310,V,0.0,N,0.0,E,22.0,0,-1,0,100,91,8382,0,00000000,1,1,310,260,46136,11869197,100,5,AiristaTesting,fa:55:3d:c0:32:4e,-47,,f6:55:3d:c0:32:4e,-22:13:78:5A:AF,-84,null,30:0A:B7:2D:7B:39,-52,null,02:37:01:E6:58:1E,-73,null,59:A3:33:97:9D:7A,-82,null,6D:D2:52:DC:1C:AB,-86,0.0]
-// [3G*357593065573357*0107*ALCUSTOMER1,011222,200026,V,0.0,N,0.0,E,22.0,0,-1,0,100,86,8382,0,00100008,1,1,310,260,46136,11869197,100,5,AiristaTesting,fa:55:3d:c0:32:4e,-50,AiristaMist,5c:5b:35:01:b6:f1,-57,,ac:a3:1e:94:91:20,-68,Flex Point-2,70:03:7e:76:b4:3e,-71,,ba:3f:8c:fe:b9:85,-71,0.0]
-// [3G*357593065573357*0107*ALCUSTOMER1,011222,200041,V,0.0,N,0.0,E,22.0,0,-1,0,100,86,8382,0,40000008,1,1,310,260,46136,11869197,100,5,AiristaTesting,fa:55:3d:c0:32:4e,-50,AiristaMist,5c:5b:35:01:b6:f1,-57,,ac:a3:1e:94:91:20,-68,Flex Point-2,70:03:7e:76:b4:3e,-71,,ba:3f:8c:fe:b9:85,-71,0.0]
-// [3G*357593065573357*0106*ALCUSTOMER1,011222,200140,V,0.0,N,0.0,E,22.0,0,-1,0,100,86,8382,0,00010000,1,1,310,260,46136,11869197,100,5,AiristaTesting,fa:55:3d:c0:32:4e,-45,Aruba,ac:a3:1e:94:91:21,-59,,ac:a3:1e:94:91:20,-59,AFDemo,a0:3d:6f:53:d6:84,-67,AiristaMist,5c:5b:35:01:b6:f1,-73,0.0]
 
+// [3G*357593065573357*0107*ALCUSTOMER1,011222,200026,V,0.0,N,0.0,E,22.0,0,-1,0,100,86,8382,0,00100008,1,1,310,260,46136,11869197,100,5,AiristaTesting,fa:55:3d:c0:32:4e,-50,AiristaMist,5c:5b:35:01:b6:f1,-57,,ac:a3:1e:94:91:20,-68,Flex Point-2,70:03:7e:76:b4:3e,-71,,ba:3f:8c:fe:b9:85,-71,0.0]
+
+// [3G*357593065573357*0107*ALCUSTOMER1,011222,200041,V,0.0,N,0.0,E,22.0,0,-1,0,100,86,8382,0,40000008,1,1,310,260,46136,11869197,100,5,AiristaTesting,fa:55:3d:c0:32:4e,-50,AiristaMist,5c:5b:35:01:b6:f1,-57,,ac:a3:1e:94:91:20,-68,Flex Point-2,70:03:7e:76:b4:3e,-71,,ba:3f:8c:fe:b9:85,-71,0.0]
+// Missed call?
+
+// [3G*357593065573357*0106*ALCUSTOMER1,011222,200140,V,0.0,N,0.0,E,22.0,0,-1,0,100,86,8382,0,00010000,1,1,310,260,46136,11869197,100,5,AiristaTesting,fa:55:3d:c0:32:4e,-45,Aruba,ac:a3:1e:94:91:21,-59,,ac:a3:1e:94:91:20,-59,AFDemo,a0:3d:6f:53:d6:84,-67,AiristaMist,5c:5b:35:01:b6:f1,-73,0.0]
+// SOS?
 func getJSONFromCUSTOMER(msg string, deviceIMEI string) (PreciseGPSData, error) {
 	fmt.Println("-CUSTOMER-")
 	fmt.Println(msg)
@@ -176,7 +180,7 @@ func getJSONFromCUSTOMER(msg string, deviceIMEI string) (PreciseGPSData, error) 
 	splitStatuses := strings.Split(splitString[16], "")
 	fmt.Println(splitStatuses)
 
-	if splitString[16][3] == 1 {
+	if splitStatuses[3] == "1" {
 		fmt.Println("SOS BUTTON PRESSED!")
 		retObj.Sos = true
 	}
