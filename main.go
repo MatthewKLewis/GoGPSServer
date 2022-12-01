@@ -55,6 +55,7 @@ func threadedClientConnectionHandler(connection net.Conn) {
 			return
 		}
 		message := string(buffer[:mLen])
+		fmt.Println(message)
 
 		// Sorting
 		if strings.Contains(message, "AP00") {
@@ -114,11 +115,9 @@ func threadedClientConnectionHandler(connection net.Conn) {
 		} else if strings.Contains(message, "LK") {
 
 			// LK = Link
-			fmt.Println("-- LK")
 			deviceIMEI = getIMEIFromLK(message)
 			stringToSend := "[3G*" + deviceIMEI + "*0002*LK]"
 			connection.Write([]byte(stringToSend))
-			fmt.Print("... Responded")
 
 		} else if strings.Contains(message, "CUSTOMER") {
 
