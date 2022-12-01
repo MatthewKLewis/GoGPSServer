@@ -76,7 +76,7 @@ func threadedClientConnectionHandler(connection net.Conn) {
 				fmt.Println("Error marshaling json:", err.Error())
 				return
 			}
-			res, err := http.Post(alertRoute, "application/json", bytes.NewBuffer(body))
+			res, err := http.Post(locationRoute, "application/json", bytes.NewBuffer(body))
 			if err != nil {
 				fmt.Println(err.Error())
 				return
