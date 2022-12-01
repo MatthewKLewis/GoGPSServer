@@ -30,6 +30,8 @@ func getIMEIFromAP00(msg string) string {
 }
 
 func getIMEIFromLK(msg string) string {
+	fmt.Println("-LK-")
+	fmt.Println(msg)
 	return msg[4:19]
 }
 
@@ -160,6 +162,10 @@ func getJSONFromCUSTOMER(msg string, deviceIMEI string) (PreciseGPSData, error) 
 
 	retObj.Latitude = lat
 	retObj.Longitude = lon
+
+	// TEST DATA
+	retObj.Latitude = 39.52446611596893
+	retObj.Longitude = -76.65204622381573
 
 	if splitString[16][4] == 1 {
 		fmt.Println("SOS BUTTON PRESSED!")

@@ -72,9 +72,10 @@ func threadedClientConnectionHandler(connection net.Conn) {
 			handleError(err)
 			sendToAPI(packetData)
 
-		} else if strings.Contains(message, "LK") { // LK = Link
+		} else if strings.Contains(message, "LK") { // LK = Link // [3G*8800000015*0009*UPLOAD,600]
 			deviceIMEI = getIMEIFromLK(message)
 			connection.Write([]byte("[3G*" + deviceIMEI + "*0002*LK]"))
+			connection.Write([]byte("[3G*" + deviceIMEI + "*0009*UPLOAD,30]"))
 
 		} else if strings.Contains(message, "CUSTOMER") { // CUSTOMER = Location
 			packetData, err = getJSONFromCUSTOMER(message, deviceIMEI)
@@ -94,5 +95,5 @@ func sendToAPI(packet PreciseGPSData) {
 	res, err := http.Post(locationRoute, "application/json", bytes.NewBuffer(body))
 	handleError(err)
 	resBody, _ := ioutil.ReadAll(res.Body)
-	fmt.Printf("client: response body: %s\n", resBody)
+	fmt.Printf("XpertRestAPI response: %s\n", resBody)
 }
