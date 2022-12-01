@@ -75,7 +75,7 @@ func threadedClientConnectionHandler(connection net.Conn) {
 		} else if strings.Contains(message, "LK") { // LK = Link // [3G*8800000015*0009*UPLOAD,600]
 			deviceIMEI = getIMEIFromLK(message)
 			connection.Write([]byte("[3G*" + deviceIMEI + "*0002*LK]"))
-			connection.Write([]byte("[3G*" + deviceIMEI + "*0009*UPLOAD,30]"))
+			connection.Write([]byte("[3G*" + deviceIMEI + "*0008*UPLOAD,60]"))
 
 		} else if strings.Contains(message, "CUSTOMER") { // CUSTOMER = Location
 			packetData, err = getJSONFromCUSTOMER(message, deviceIMEI)
