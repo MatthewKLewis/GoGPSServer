@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// 39.52446611596893, -76.65204622381573
 type PreciseGPSData struct {
 	Deviceimei        string  `json:"deviceimei"`
 	Latitude          float64 `json:"latitude"`
@@ -51,20 +52,21 @@ func getJSONFromAP01(msg string, deviceIMEI string) (PreciseGPSData, error) {
 		LocMessageContent: "",
 	}
 
-	// if msg[12] != 'A' { // Valid packets have an 'A' (65) rather than a 'V' (86) at index 6
-	// 	return retObj, errors.New("No LAT LON")
-	// }
-
-	latDeg, err := strconv.ParseFloat(msg[13:15], 64) //Range is smaller for latitudes
-	latPoints, err := strconv.ParseFloat(msg[16:23], 64)
-	lonDeg, err := strconv.ParseFloat(msg[23:26], 64) //Range is 1 digit larger for longitudes
-	lonPoints, err := strconv.ParseFloat(msg[27:33], 64)
-	if err != nil {
-		fmt.Println(err.Error())
-		return retObj, err
+	if msg[12] != 'A' { // Valid packets have an 'A' (65) rather than a 'V' (86) at index 6
+		retObj.Latitude = 39.52446611596893
+		retObj.Longitude = -76.65204622381573
+	} else {
+		latDeg, err := strconv.ParseFloat(msg[13:15], 64) //Range is smaller for latitudes
+		latPoints, err := strconv.ParseFloat(msg[16:23], 64)
+		lonDeg, err := strconv.ParseFloat(msg[23:26], 64) //Range is 1 digit larger for longitudes
+		lonPoints, err := strconv.ParseFloat(msg[27:33], 64)
+		if err != nil {
+			fmt.Println(err.Error())
+			return retObj, err
+		}
+		retObj.Latitude = latDeg + latPoints/300
+		retObj.Longitude = lonDeg + lonPoints/300
 	}
-	retObj.Latitude = latDeg + latPoints/300
-	retObj.Longitude = lonDeg + lonPoints/300
 
 	rssis := strings.Split(msg, "|")[1:]
 	for i := 0; i < len(rssis); i++ {
@@ -72,7 +74,7 @@ func getJSONFromAP01(msg string, deviceIMEI string) (PreciseGPSData, error) {
 		if i%2 == 0 {
 			retObj.LocMessageContent += rssis[i] + ":"
 		} else if i == len(rssis)-1 {
-			retObj.LocMessageContent += strings.Split(rssis[i], "&")[0] + "#"
+			retObj.LocMessageContent += strings.Split(rssis[i], "&")[0]
 		} else {
 			retObj.LocMessageContent += strings.Split(rssis[i], "&")[0] + ";"
 		}
@@ -98,21 +100,21 @@ func getJSONFromAP10(msg string, deviceIMEI string) (PreciseGPSData, error) {
 		LocMessageContent: "",
 	}
 
-	// if msg[12] != 'A' { // Valid packets have an 'A' (65) rather than a 'V' (86) at index 6
-	// 	return retObj, errors.New("No LAT LON")
-	// }
-
-	latDeg, err := strconv.ParseFloat(msg[13:15], 64) //Range is smaller for latitudes
-	latPoints, err := strconv.ParseFloat(msg[16:23], 64)
-	lonDeg, err := strconv.ParseFloat(msg[23:26], 64) //Range is 1 digit larger for longitudes
-	lonPoints, err := strconv.ParseFloat(msg[27:33], 64)
-	if err != nil {
-		fmt.Println(err.Error())
-		return retObj, err
+	if msg[12] != 'A' { // Valid packets have an 'A' (65) rather than a 'V' (86) at index 6
+		retObj.Latitude = 39.52446611596893
+		retObj.Longitude = -76.65204622381573
+	} else {
+		latDeg, err := strconv.ParseFloat(msg[13:15], 64) //Range is smaller for latitudes
+		latPoints, err := strconv.ParseFloat(msg[16:23], 64)
+		lonDeg, err := strconv.ParseFloat(msg[23:26], 64) //Range is 1 digit larger for longitudes
+		lonPoints, err := strconv.ParseFloat(msg[27:33], 64)
+		if err != nil {
+			fmt.Println(err.Error())
+			return retObj, err
+		}
+		retObj.Latitude = latDeg + latPoints/300
+		retObj.Longitude = lonDeg + lonPoints/300
 	}
-	retObj.Latitude = latDeg + latPoints/300
-	retObj.Longitude = lonDeg + lonPoints/300
-	fmt.Println(latDeg, latPoints, lonDeg, lonPoints)
 
 	rssis := strings.Split(msg, "|")[1:]
 	for i := 0; i < len(rssis); i++ {
@@ -120,7 +122,7 @@ func getJSONFromAP10(msg string, deviceIMEI string) (PreciseGPSData, error) {
 		if i%2 == 0 {
 			retObj.LocMessageContent += rssis[i] + ":"
 		} else if i == len(rssis)-1 {
-			retObj.LocMessageContent += strings.Split(rssis[i], "&")[0] + "#"
+			retObj.LocMessageContent += strings.Split(rssis[i], "&")[0]
 		} else {
 			retObj.LocMessageContent += strings.Split(rssis[i], "&")[0] + ";"
 		}
