@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -23,6 +22,7 @@ type PreciseGPSData struct {
 	OffenderName      string  `json:"offender_name"`
 	OffenderId        string  `json:"offender_id"`
 	LocMessageContent string  `json:"loc_message_content"`
+	Sos               bool    `json:"sos"`
 }
 
 func getIMEIFromAP00(msg string) string {
@@ -50,6 +50,7 @@ func getJSONFromAP01(msg string, deviceIMEI string) (PreciseGPSData, error) {
 		OffenderName:      "",
 		OffenderId:        "",
 		LocMessageContent: "",
+		Sos:               false,
 	}
 
 	if msg[12] != 'A' { // Valid packets have an 'A' (65) rather than a 'V' (86) at index 6
@@ -70,7 +71,6 @@ func getJSONFromAP01(msg string, deviceIMEI string) (PreciseGPSData, error) {
 
 	rssis := strings.Split(msg, "|")[1:]
 	for i := 0; i < len(rssis); i++ {
-		fmt.Println(rssis[i])
 		if i%2 == 0 {
 			retObj.LocMessageContent += rssis[i] + ":"
 		} else if i == len(rssis)-1 {
@@ -98,6 +98,7 @@ func getJSONFromAP10(msg string, deviceIMEI string) (PreciseGPSData, error) {
 		OffenderName:      "",
 		OffenderId:        "",
 		LocMessageContent: "",
+		Sos:               false,
 	}
 
 	if msg[12] != 'A' { // Valid packets have an 'A' (65) rather than a 'V' (86) at index 6
@@ -118,7 +119,6 @@ func getJSONFromAP10(msg string, deviceIMEI string) (PreciseGPSData, error) {
 
 	rssis := strings.Split(msg, "|")[1:]
 	for i := 0; i < len(rssis); i++ {
-		fmt.Println(rssis[i])
 		if i%2 == 0 {
 			retObj.LocMessageContent += rssis[i] + ":"
 		} else if i == len(rssis)-1 {
@@ -131,7 +131,10 @@ func getJSONFromAP10(msg string, deviceIMEI string) (PreciseGPSData, error) {
 	return retObj, nil
 }
 
+// [3G*357593065573357*0177*UDCUSTOMER1,011222,185310,V,0.0,N,0.0,E,22.0,0,-1,0,100,91,8382,0,00000000,1,1,310,260,46136,11869197,100,5,AiristaTesting,fa:55:3d:c0:32:4e,-47,,f6:55:3d:c0:32:4e,-22:13:78:5A:AF,-84,null,30:0A:B7:2D:7B:39,-52,null,02:37:01:E6:58:1E,-73,null,59:A3:33:97:9D:7A,-82,null,6D:D2:52:DC:1C:AB,-86,0.0]
 func getJSONFromCUSTOMER(msg string, deviceIMEI string) (PreciseGPSData, error) {
+	fmt.Println("-CUSTOMER-")
+	fmt.Println(msg)
 	retObj := PreciseGPSData{
 		Deviceimei:        deviceIMEI,
 		Latitude:          0.0,
@@ -147,10 +150,40 @@ func getJSONFromCUSTOMER(msg string, deviceIMEI string) (PreciseGPSData, error) 
 		OffenderName:      "",
 		OffenderId:        "",
 		LocMessageContent: "",
+		Sos:               false,
+	}
+	splitString := strings.Split(msg, ",")
+
+	lat, err := strconv.ParseFloat(splitString[4], 64)
+	lon, err := strconv.ParseFloat(splitString[6], 64)
+	handleError(err)
+
+	retObj.Latitude = lat
+	retObj.Longitude = lon
+
+	if splitString[16][4] == 1 {
+		fmt.Println("SOS BUTTON PRESSED!")
+		retObj.Sos = true
 	}
 
-	if msg[6] != 'A' {
-		return retObj, errors.New("No LAT LON")
-	}
+	// header := splitString[0]
+	// date := splitString[1]
+	// time := splitString[2]
+	// valid := splitString[3]
+	// latMark := splitString[5]
+	// lonMark := splitString[7]
+	// velocity := splitString[6]
+	// direction := splitString[7]
+	// altitude := splitString[8]
+	// numberOfSatellites := splitString[9]
+	// gsmIntensity := splitString[10]
+	// batteryPercent := splitString[13]
+	// stepCount := splitString[12]
+	// tumblingTimes := splitString[13]
+	// statusBinaries := splitString[16]
+
+	// number of Base Stations := splitString[17]
+
+	fmt.Println(retObj)
 	return retObj, nil
 }
