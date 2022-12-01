@@ -25,13 +25,13 @@ type PreciseGPSData struct {
 }
 
 func getIMEIFromAP00(msg string) string {
-	//fmt.Println(msg)
+	fmt.Println(msg)
 	//fmt.Println(msg[6:21])
 	return msg[6:21]
 }
 
 func getIMEIFromLK(msg string) string {
-	//fmt.Println(msg)
+	fmt.Println(msg)
 	//fmt.Println(msg[4:19])
 	return msg[4:19]
 }
@@ -73,12 +73,43 @@ func getJSONFromAP01(msg string, deviceIMEI string) (PreciseGPSData, error) {
 	fmt.Println(latDeg, latPoints, lonDeg, lonPoints)
 
 	rssis := strings.Split(msg, "|")[1:]
-	fmt.Println(rssis)
+	for i := 0; i < len(rssis); i++ {
+		fmt.Println(rssis[i])
+		if i%2 == 0 {
+			retObj.loc_message_content += rssis[i] + ":"
+		} else {
+			retObj.loc_message_content += rssis[i] + ";"
+		}
+	}
 
 	return retObj, nil
 }
 
 func getJSONFromAP10(msg string, deviceIMEI string) (PreciseGPSData, error) {
+	fmt.Println(msg)
+	retObj := PreciseGPSData{
+		deviceimei:      deviceIMEI,
+		latitude:        0.0,
+		longitude:       0.0,
+		altitude:        0,
+		devicetime:      "new go parser",
+		speed:           0.0,
+		Batterylevel:    0,
+		casefile_id:     "new go parser",
+		address:         "new go parser",
+		positioningmode: "new go parser",
+		tz:              "new go parser",
+		offender_name:   "new go parser",
+		offender_id:     "new go parser",
+	}
+
+	if msg[6] != 'A' {
+		return retObj, errors.New("No LAT LON")
+	}
+	return retObj, nil
+}
+
+func getJSONFromCUSTOMER(msg string, deviceIMEI string) (PreciseGPSData, error) {
 	fmt.Println(msg)
 	retObj := PreciseGPSData{
 		deviceimei:      deviceIMEI,

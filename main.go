@@ -117,13 +117,29 @@ func threadedClientConnectionHandler(connection net.Conn) {
 			fmt.Println("-- LK")
 			deviceIMEI = getIMEIFromLK(message)
 			stringToSend := "[3G*" + deviceIMEI + "*0002*LK]"
-			fmt.Println(stringToSend)
 			connection.Write([]byte(stringToSend))
+			fmt.Print("... Responded")
 
 		} else if strings.Contains(message, "CUSTOMER") {
 
-			// CUSTOMER = Location for LK-type messages
-			fmt.Println("-- CUSTOMER...")
+			// CUSTOMER = Location
+			var packetData, err = getJSONFromCUSTOMER(message, deviceIMEI)
+			if err != nil {
+				fmt.Println(err.Error())
+				return
+			}
+			body, err := json.Marshal(packetData)
+			if err != nil {
+				fmt.Println("Error marshaling json:", err.Error())
+				return
+			}
+			res, err := http.Post(locationRoute, "application/json", bytes.NewBuffer(body))
+			if err != nil {
+				fmt.Println(err.Error())
+				return
+			}
+			resBody, _ := ioutil.ReadAll(res.Body)
+			fmt.Printf("client: response body: %s\n", resBody)
 
 		} else {
 
