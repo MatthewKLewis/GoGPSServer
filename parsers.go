@@ -24,6 +24,14 @@ type PreciseGPSData struct {
 	Sos               bool    `json:"sos"`
 }
 
+type XpertDeviceData struct {
+	Id int `json:"Id"`
+}
+
+type XpertConfigData struct {
+	Id int `json:"Id"`
+}
+
 func getIMEIFromAP00(msg string) string {
 	//fmt.Println(string(msg[6:21]))
 	return msg[6:21]

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net"
 	"net/http"
 	"os"
@@ -13,10 +14,13 @@ import (
 )
 
 const (
-	host           = "172.31.51.82"
-	port           = "8000"
-	connectionType = "tcp"
-	locationRoute  = "http://3.212.201.170:802/XpertRestApi/api/location_data" //http://52.45.17.177:802/XpertRestApi/api/location_data //http://3.212.201.170:802/XpertRestApi/api/location_data
+	host                  = "172.31.51.82"
+	port                  = "8000"
+	connectionType        = "tcp"
+	locationRoute         = "http://3.212.201.170:802/XpertRestApi/api/location_data" //http://52.45.17.177:802/XpertRestApi/api/location_data //http://3.212.201.170:802/XpertRestApi/api/location_data
+	getDeviceByMacRoute   = "http://3.212.201.170:802/XpertRestApi/api/Device/GetByMacAddress?"
+	getConfigPendingRoute = "http://3.212.201.170:802/XpertRestApi/api/Device/GetConfigPendingByDeviceId?"
+	setConfigRoute        = "http://3.212.201.170:802/XpertRestApi/api/Device/SetDeviceConfigurations?  CustomerId=2047 &ConfigID=1235 &PendingConfigID=0"
 )
 
 func main() {
@@ -55,8 +59,14 @@ func threadedClientConnectionHandler(connection net.Conn) {
 		message := string(buffer[:mLen])
 
 		//if there is an IMEI, call to API for GetConfigByMAC / GET
+		//get config by mac
+		//set config as active
 
-		fmt.Println(message)
+		//fmt.Println(message)
+
+		if deviceIMEI != "" {
+			go getConfigurationForTag(deviceIMEI)
+		}
 
 		// Sorting
 		if strings.Contains(message, "AP00") { // AP00 = Connection
@@ -66,6 +76,8 @@ func threadedClientConnectionHandler(connection net.Conn) {
 		} else if strings.Contains(message, "AP03") { // AP03 = Heartbeat
 			go connection.Write([]byte("IWBP03#"))
 
+		} else if strings.Contains(message, "IWAPTQ") { // IWAPTQ = ???
+			// do nothing
 		} else if strings.Contains(message, "IWAP01") { // AP01 = Location
 			packetData, err = getJSONFromAP01(message, deviceIMEI) //carve off the "IW"
 			if err != nil {
@@ -116,5 +128,54 @@ func sendToAPI(packet PreciseGPSData) {
 	handleError(err)
 
 	resBody, _ := ioutil.ReadAll(res.Body)
-	fmt.Printf("XpertRestAPI response: %s\n", resBody)
+	fmt.Printf("Location Update API response: %s\n", resBody)
+}
+
+// getConfigRoute = "http://3.212.201.170:802/XpertRestApi/api/Device/GetConfigByDeviceId?  DeviceId=1 &CustomerId=1"
+// setConfigRoute = "http://3.212.201.170:802/XpertRestApi/api/Device/SetDeviceConfigurations?  CustomerId=2047 &ConfigID=1235 &PendingConfigID=0"
+func getConfigurationForTag(imei string) {
+
+	client := &http.Client{}
+	deviceData := XpertDeviceData{}
+	configData := XpertConfigData{}
+	var basicAuth = "Basic " + "YWZhZG1pbjphZG1pbg==" //Basic YWZhZG1pbjphZG1pbg==
+
+	//Request
+	formattedGetDeviceRoute := getDeviceByMacRoute + "MacAddress=" + imei + "&CustomerId=" + "2047"
+	req, err := http.NewRequest("GET", formattedGetDeviceRoute, nil)
+	req.Header.Add("Authorization", basicAuth)
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Println("Error on response.\n[ERROR] -", err)
+	}
+	defer resp.Body.Close()
+
+	//Decode
+	if err := json.NewDecoder(resp.Body).Decode(&deviceData); err != nil {
+		log.Fatal("Error decoding json" + err.Error())
+	}
+	fmt.Println("Device ID", deviceData.Id)
+
+	//Request
+	formattedGetConfigRoute := getConfigPendingRoute + "DeviceId=" + fmt.Sprint(deviceData.Id) + "&CustomerId=" + "2047"
+	fmt.Println(formattedGetConfigRoute)
+	req, err = http.NewRequest("GET", formattedGetConfigRoute, nil)
+	req.Header.Add("Authorization", basicAuth)
+	resp, err = client.Do(req)
+	if err != nil {
+		log.Println("Error on response.\n[ERROR] -", err)
+	}
+	defer resp.Body.Close()
+
+	//Decode
+	if err := json.NewDecoder(resp.Body).Decode(&configData); err != nil {
+		log.Fatal("Error decoding json" + err.Error())
+	}
+	fmt.Println("Config ID", configData.Id)
+
+	// res, err = http.Get(formattedGetConfigRoute + "DeviceId=" + imei + "&CustomerId=" + "2047")
+	// handleError(err)
+	// resBody, _ = ioutil.ReadAll(res.Body)
+	// fmt.Printf("Config Update API response: %s\n", resBody)
+
 }
