@@ -25,11 +25,22 @@ type PreciseGPSData struct {
 }
 
 type XpertDeviceData struct {
-	Id int `json:"Id"`
+	Id              int `json:"Id"`
+	PendingConfigId int `json:"PendingConfigId"`
 }
 
 type XpertConfigData struct {
-	Id int `json:"Id"`
+	Id         int    `json:"Id"`
+	ConfigName string `json:"ConfigName"`
+	DeviceType string `json:"DeviceType"`
+	ConfigDef  string `json:"ConfigDef"`
+}
+
+type XpertW9ConfigDefinitionData struct {
+	WorkingMode  string `json:"workingMode"`
+	PhoneNumber1 string `json:"phoneNumber1"`
+	PhoneNumber2 string `json:"phoneNumber2"`
+	PhoneNumber3 string `json:"phoneNumber3"`
 }
 
 func getIMEIFromAP00(msg string) string {
@@ -195,7 +206,7 @@ func getJSONFromAP10(msg string, deviceIMEI string) (PreciseGPSData, error) {
 }
 
 func getJSONFromCUSTOMER(msg string, deviceIMEI string) (PreciseGPSData, error) {
-	//fmt.Println(msg)
+	fmt.Println(msg)
 	retObj := PreciseGPSData{
 		Deviceimei:        deviceIMEI,
 		Latitude:          0.0,
