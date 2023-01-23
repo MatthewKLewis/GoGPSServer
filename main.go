@@ -59,7 +59,7 @@ func threadedClientConnectionHandler(connection net.Conn) {
 
 		message := string(buffer[:mLen])
 
-		fmt.Println(message)
+		fmt.Println("Message: " + message)
 
 		if deviceIMEI != "" {
 			oDevice = getDeviceFromIMEI(deviceIMEI)
@@ -108,25 +108,31 @@ func threadedClientConnectionHandler(connection net.Conn) {
 
 		} else if strings.Contains(message, "AP33") { // AP10 = Alert
 			fmt.Println("RECEIVED NEW WORKING MODE!")
-
 			//tell API that the config change has been satisfied
 
 		} else if strings.Contains(message, "LK") { // LK = Link
-			// deviceIMEI = getIMEIFromLK(message)
-			// [3G*8800000015*0009*UPLOAD,600] [3G*8800000015*0027*SOS,00000000000,00000000000,00000000000]
-			// connection.Write([]byte("[3G*" + deviceIMEI + "*0002*LK]"))
-			// connection.Write([]byte("[3G*" + deviceIMEI + "*0009*UPLOAD,10]"))
-			// connection.Write([]byte("[3G*" + deviceIMEI + "*0027*SOS,14438137623,00000000000,00000000000]"))
+			deviceIMEI = getIMEIFromLK(message)
+			fmt.Println("SENDING: [3G*" + deviceIMEI + "*0027*SOS,15712257714,15712257714,15712257714]")
+
+			connection.Write([]byte("[3G*" + deviceIMEI + "*0002*LK]"))
+			connection.Write([]byte("[3G*" + deviceIMEI + "*0009*UPLOAD,10]"))
+			connection.Write([]byte("[3G*" + deviceIMEI + "*0027*SOS,15555555555,15555555555,15555555555]"))
 		} else if strings.Contains(message, "ALCUSTOMER") { // ALCUSTOMER = Alarm
 			packetData, err = getJSONFromCUSTOMER(message, deviceIMEI)
 			handleError(err)
 			sendLocationToAPI(packetData)
 		} else if strings.Contains(message, "UDCUSTOMER") { // UDCUSTOMER = Location
-			// packetData, err = getJSONFromCUSTOMER(message, deviceIMEI)
-			// handleError(err)
-			// sendLocationToAPI(packetData)
+			packetData, err = getJSONFromCUSTOMER(message, deviceIMEI)
+			handleError(err)
+			sendLocationToAPI(packetData)
+
+			//RESPONSES -- THREAD ENDS
+		} else if strings.Contains(message, "UPLOAD") { // UDCUSTOMER = Location
+			fmt.Println("UPLOAD complete.")
+		} else if strings.Contains(message, "SOS") { // UDCUSTOMER = Location
+			fmt.Println("SOS # UPDATE complete.")
 		} else {
-			fmt.Println(message)
+			fmt.Println("Message? " + message)
 		}
 	}
 }
@@ -178,12 +184,12 @@ func pushConfigurationToTag(connection net.Conn, imei string, device XpertDevice
 
 	//Write Phone Command to Device
 	sosPhoneCommand := "IWBP12," + imei + ",080835," + configDefData.PhoneNumber1 + "," + configDefData.PhoneNumber2 + "," + configDefData.PhoneNumber3 + "#"
-	fmt.Println(sosPhoneCommand)
+	//fmt.Println(sosPhoneCommand)
 	connection.Write([]byte(sosPhoneCommand))
 
 	//Write Mode Command To Device //ADD SWITCH CASE FOR 1,2,3 NORMAL,POWERSAVE,EMERGENCY
 	workingModeCommand := "IWBP33," + imei + ",080835," + "3" + "#"
-	fmt.Println(workingModeCommand)
+	//fmt.Println(workingModeCommand)
 	connection.Write([]byte(workingModeCommand))
 }
 
@@ -206,7 +212,7 @@ func getDeviceFromIMEI(imei string) XpertDeviceData {
 	if err := json.NewDecoder(resp.Body).Decode(&deviceData); err != nil {
 		log.Fatal("Error decoding json" + err.Error())
 	}
-	fmt.Println(deviceData)
+	//fmt.Println(deviceData)
 	return deviceData
 }
 
@@ -221,7 +227,7 @@ func sendSatisfiedConfigToAPI(device XpertDeviceData) {
 	var basicAuth = "Basic " + "YWZhZG1pbjphZG1pbg==" //Basic YWZhZG1pbjphZG1pbg==
 
 	deviceIdArray := `[` + fmt.Sprint(device.Id) + `]`
-	fmt.Println(deviceIdArray)
+	//fmt.Println(deviceIdArray)
 	jsonBody := []byte(deviceIdArray)
 	bodyReader := bytes.NewReader(jsonBody)
 
@@ -235,7 +241,7 @@ func sendSatisfiedConfigToAPI(device XpertDeviceData) {
 		log.Println("Error on response.\n[ERROR] -", err)
 	}
 	defer res.Body.Close()
-	resBody, err := ioutil.ReadAll(res.Body)
-	fmt.Println(string(resBody))
+	//resBody, err := ioutil.ReadAll(res.Body)
+	//fmt.Println(string(resBody))
 
 }

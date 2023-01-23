@@ -165,7 +165,7 @@ func getJSONFromAP10(msg string, deviceIMEI string) (PreciseGPSData, error) {
 		lonSecs, err := strconv.ParseFloat(msg[29:33], 64)
 		lonSign := msg[33]
 
-		fmt.Println(latDeg, latMins, latSecs, string(latSign), lonDeg, lonMins, lonSecs, string(lonSign))
+		//fmt.Println(latDeg, latMins, latSecs, string(latSign), lonDeg, lonMins, lonSecs, string(lonSign))
 		if err != nil {
 			fmt.Println(err.Error())
 			return retObj, err
@@ -206,7 +206,6 @@ func getJSONFromAP10(msg string, deviceIMEI string) (PreciseGPSData, error) {
 }
 
 func getJSONFromCUSTOMER(msg string, deviceIMEI string) (PreciseGPSData, error) {
-	fmt.Println(msg)
 	retObj := PreciseGPSData{
 		Deviceimei:        deviceIMEI,
 		Latitude:          0.0,
@@ -229,15 +228,18 @@ func getJSONFromCUSTOMER(msg string, deviceIMEI string) (PreciseGPSData, error) 
 	lat, err := strconv.ParseFloat(splitString[4], 64)
 	lon, err := strconv.ParseFloat(splitString[6], 64)
 	handleError(err)
-
+	if splitString[5] == "S" {
+		fmt.Println("FLIP Equator")
+		lat *= -1
+	}
+	if splitString[7] == "W" {
+		fmt.Println("FLIP Meridian")
+		lon *= -1
+	}
 	retObj.Latitude = lat
 	retObj.Longitude = lon
 
 	retObj.BatteryLevel, _ = strconv.ParseInt(splitString[13], 0, 32)
-
-	// TEST DATA
-	retObj.Latitude = 39.52446611596893
-	retObj.Longitude = -76.65204622381573
 
 	if splitString[16] == "00010000" {
 		retObj.Sos = true
